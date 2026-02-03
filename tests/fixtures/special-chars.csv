@@ -1,0 +1,8 @@
+name,description,notes
+"Smith, Jr.","""Hello"" world","Contains quotes"
+"Line
+Break","Multi-line
+content","Has newlines"
+Émile,Café français,Accented characters
+"Comma, separated","Multiple, commas, here","More commas"
+"Tab	separated","Contains	tabs","Tab characters"

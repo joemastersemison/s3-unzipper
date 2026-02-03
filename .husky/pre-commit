@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run lint-staged for linting and formatting staged files only
+npx lint-staged
+
+# Check if there are any staged files after lint-staged
+if git diff --cached --quiet; then
+  echo "❌ No staged files found after linting. Something went wrong."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"

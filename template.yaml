@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: S3 Unzipper Lambda function that processes zip files and organizes extracted files by stem names
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Existing S3 bucket name for processing
+    MinLength: 3
+    MaxLength: 63
+
+  Region:
+    Type: String
+    Default: us-east-1
+    Description: AWS region where bucket is located
+
+  InputPath:
+    Type: String
+    Default: input/
+    Description: S3 prefix for zip file inputs
+
+  OutputPath:
+    Type: String
+    Default: output/
+    Description: S3 prefix for extracted file outputs
+
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - DEBUG
+      - INFO
+      - WARN
+      - ERROR
+    Description: Log level for the Lambda function
+
+Globals:
+  Function:
+    Timeout: 900
+    MemorySize: 1024
+    Runtime: nodejs20.x
+    Environment:
+      Variables:
+        LOG_LEVEL: !Ref LogLevel
+
+Resources:
+  UnzipperFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dist/
+      Handler: handlers/s3-unzipper.handler
+      Description: Processes zip files from S3 and organizes extracted files by stem names
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+          INPUT_PATH: !Ref InputPath
+          OUTPUT_PATH: !Ref OutputPath
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource: !Sub 'arn:aws:s3:::${BucketName}/${InputPath}*'
+        - Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:PutObjectAcl
+            Resource: !Sub 'arn:aws:s3:::${BucketName}/${OutputPath}*'
+        - Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*'
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref BucketName
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: !Ref InputPath
+                  - Name: suffix
+                    Value: .zip
+
+  # Log group for the Lambda function
+  UnzipperFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${UnzipperFunction}'
+      RetentionInDays: 14
+
+Outputs:
+  UnzipperFunction:
+    Description: S3 Unzipper Lambda Function ARN
+    Value: !GetAtt UnzipperFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-UnzipperFunction'
+
+  UnzipperFunctionIamRole:
+    Description: Implicit IAM Role created for the function
+    Value: !GetAtt UnzipperFunctionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-UnzipperFunctionRole'
