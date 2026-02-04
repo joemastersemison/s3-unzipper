@@ -6,11 +6,20 @@ describe('MemoryMonitor', () => {
   beforeEach(() => {
     // Create a fresh instance for each test
     monitor = MemoryMonitor.getInstance({
-      warningThreshold: 95, // Set very high to prevent triggering during tests
-      circuitBreakerThreshold: 98,
+      warningThreshold: 70, // Normal thresholds for testing
+      circuitBreakerThreshold: 80,
     });
     // Force reset circuit breaker state by accessing private property
     (monitor as any).circuitBreakerTripped = false;
+
+    // Mock getMemoryUsage to return controlled values for testing
+    jest.spyOn(monitor, 'getMemoryUsage').mockReturnValue({
+      heapUsed: 50 * 1024 * 1024, // 50MB
+      heapTotal: 200 * 1024 * 1024, // 200MB
+      external: 10 * 1024 * 1024, // 10MB
+      rss: 100 * 1024 * 1024, // 100MB
+      usagePercentage: 25, // 25% - well below thresholds
+    });
   });
 
   describe('getMemoryUsage', () => {
