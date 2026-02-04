@@ -33,6 +33,13 @@ describe('ZipProcessor Dependency Injection', () => {
     // Mock memory monitor to always allow processing
     (memoryMonitor.checkMemoryUsage as jest.Mock).mockReturnValue(true);
     (memoryMonitor.isCircuitBreakerTripped as jest.Mock).mockReturnValue(false);
+    (memoryMonitor.getMemoryUsage as jest.Mock).mockReturnValue({
+      heapUsed: 100 * 1024 * 1024, // 100MB
+      heapTotal: 200 * 1024 * 1024, // 200MB
+      external: 10 * 1024 * 1024, // 10MB
+      rss: 150 * 1024 * 1024, // 150MB
+      usagePercentage: 50, // 50% usage
+    });
   });
 
   describe('Constructor Dependency Injection', () => {
