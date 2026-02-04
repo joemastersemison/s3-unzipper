@@ -50,8 +50,8 @@ web_modules/
 # Optional npm cache directory
 .npm
 
-# Optional eslint cache
-.eslintcache
+# Biome cache
+.biome/
 
 # Optional stylelint cache
 .stylelintcache
@@ -137,3 +137,11 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# AWS SAM
+.aws-sam/
+samconfig.toml.bak
+
+# AWS credentials and config (don't commit these)
+.aws/
+aws-exports.js
