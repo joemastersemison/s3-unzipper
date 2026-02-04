@@ -22,7 +22,7 @@ describe('DataSanitizer', () => {
 
     it('should handle empty keys', () => {
       expect(DataSanitizer.sanitizeS3Key('')).toBe('[empty-key]');
-      expect(DataSanitizer.sanitizeS3Key(null as any)).toBe('[empty-key]');
+      expect(DataSanitizer.sanitizeS3Key(null as unknown as string)).toBe('[empty-key]');
     });
   });
 
@@ -51,7 +51,7 @@ describe('DataSanitizer', () => {
     });
 
     it('should handle very long filenames', () => {
-      const longFilename = 'a'.repeat(100) + '.csv';
+      const longFilename = `${'a'.repeat(100)}.csv`;
       const sanitized = DataSanitizer.sanitizeFilename(longFilename);
 
       expect(sanitized.length).toBeLessThan(60);

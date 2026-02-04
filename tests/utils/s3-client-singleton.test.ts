@@ -1,8 +1,8 @@
 import {
+  destroyS3Client,
   getS3Client,
   getS3ClientInfo,
   recreateS3Client,
-  destroyS3Client,
 } from '../../src/utils/s3-client-singleton';
 
 describe('S3ClientSingleton', () => {
@@ -21,7 +21,7 @@ describe('S3ClientSingleton', () => {
     });
 
     it('should return the same instance on subsequent calls', () => {
-      const client1 = getS3Client();
+      const _client1 = getS3Client();
       const client2 = getS3Client();
       expect(client1).toBe(client2);
     });
@@ -49,7 +49,7 @@ describe('S3ClientSingleton', () => {
 
   describe('recreateS3Client', () => {
     it('should force recreation of the client', () => {
-      const client1 = getS3Client();
+      const _client1 = getS3Client();
       // Get initial client info to verify it was initialized
       let info = getS3ClientInfo();
       expect(info.isInitialized).toBe(true);

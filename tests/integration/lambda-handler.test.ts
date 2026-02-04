@@ -61,7 +61,7 @@ describe('Lambda Handler Integration Tests', () => {
     };
 
     // Execute handler - should complete successfully without processing (no S3 calls)
-    await expect(handler(s3Event, context, {} as any)).resolves.toBeUndefined();
+    await expect(handler(s3Event, context, {} as never)).resolves.toBeUndefined();
   });
 
   test('should validate configuration on startup', () => {
@@ -92,6 +92,6 @@ describe('Lambda Handler Integration Tests', () => {
     };
 
     // Should complete successfully with no records to process
-    await expect(handler(s3Event, context, {} as any)).resolves.toBeUndefined();
+    await expect(handler(s3Event, context, {} as never)).resolves.toBeUndefined();
   });
 });

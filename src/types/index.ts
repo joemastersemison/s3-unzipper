@@ -45,7 +45,7 @@ export interface LoggingContext {
   bucket?: string;
   key?: string;
   operation?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface S3StreamOptions {

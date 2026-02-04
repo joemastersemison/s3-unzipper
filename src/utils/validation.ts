@@ -28,6 +28,7 @@ export function validateS3Key(key: string): { isValid: boolean; error?: string }
   }
 
   // Check for control characters (0x00-0x1F and 0x7F-0x9F)
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: Security validation requires control character detection
   const controlCharPattern = /[\x00-\x1f\x7f-\x9f]/;
   if (controlCharPattern.test(key)) {
     return {
@@ -41,6 +42,7 @@ export function validateS3Key(key: string): { isValid: boolean; error?: string }
     /\.\./, // Directory traversal
     /^\/+/, // Absolute path
     /\/\/+/, // Double slashes
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: Security validation requires control character detection
     /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/, // Additional control chars
     /<script/i, // Script injection attempts
     /javascript:/i, // JavaScript protocol
@@ -141,6 +143,7 @@ export function sanitizeFilename(filename: string): string {
 
   let sanitized = filename
     // Remove or replace dangerous characters
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: Security sanitization requires control character replacement
     .replace(/[\x00-\x1f\x7f-\x9f]/g, '_') // Control characters
     .replace(/[<>:"|?*]/g, '_') // Windows reserved characters
     .replace(/\.\./g, '_') // Directory traversal
@@ -177,6 +180,7 @@ export function isValidS3PathComponent(component: string): boolean {
 
   // Check for dangerous patterns
   const dangerousPatterns = [
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: Security validation requires control character detection
     /[\x00-\x1f\x7f-\x9f]/, // Control characters
     /\.\./, // Directory traversal
     /^\.+$/, // Only dots

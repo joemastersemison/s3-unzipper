@@ -1,4 +1,4 @@
-import { RetryHandler, retryWithBackoff } from '../../src/utils/retry-handler';
+import { RetryHandler } from '../../src/utils/retry-handler';
 
 describe('RetryHandler', () => {
   beforeEach(() => {
@@ -137,10 +137,12 @@ describe('RetryHandler', () => {
       const originalSetTimeout = global.setTimeout;
 
       // Mock setTimeout with a simpler approach
-      jest.spyOn(global, 'setTimeout').mockImplementation((callback: any, delay?: number) => {
-        delays.push(delay || 0);
-        return originalSetTimeout(callback, 1); // Use minimal delay for test
-      });
+      jest
+        .spyOn(global, 'setTimeout')
+        .mockImplementation((callback: () => void, delay?: number) => {
+          delays.push(delay || 0);
+          return originalSetTimeout(callback, 1); // Use minimal delay for test
+        });
 
       const mockFn = jest
         .fn()
