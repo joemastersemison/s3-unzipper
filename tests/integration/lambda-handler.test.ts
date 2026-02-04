@@ -1,9 +1,18 @@
 import type { Context, S3Event } from 'aws-lambda';
 import { handler } from '../../src/handlers/s3-unzipper';
+import { memoryMonitor } from '../../src/utils/memory-monitor';
+
+// Mock memory monitor to prevent circuit breaker issues during testing
+jest.mock('../../src/utils/memory-monitor');
 
 // Simple integration tests without complex mocking
 // Note: Environment variables are set in tests/setup.ts
 describe('Lambda Handler Integration Tests', () => {
+  beforeEach(() => {
+    // Mock memory monitor to always allow processing
+    (memoryMonitor.checkMemoryUsage as jest.Mock).mockReturnValue(true);
+    (memoryMonitor.isCircuitBreakerTripped as jest.Mock).mockReturnValue(false);
+  });
   test('should skip non-zip files', async () => {
     // Create test S3 event with non-zip file
     const s3Event: S3Event = {

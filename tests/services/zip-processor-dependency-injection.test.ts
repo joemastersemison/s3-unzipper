@@ -1,11 +1,13 @@
 import { CSVProcessor } from '../../src/services/csv-processor';
 import { S3Service } from '../../src/services/s3-service';
 import { ZipProcessor } from '../../src/services/zip-processor';
+import { memoryMonitor } from '../../src/utils/memory-monitor';
 
 // Mock the dependencies
 jest.mock('../../src/services/s3-service');
 jest.mock('../../src/services/csv-processor');
 jest.mock('../../src/utils/file-upload-handler');
+jest.mock('../../src/utils/memory-monitor');
 
 describe('ZipProcessor Dependency Injection', () => {
   let mockS3Service: jest.Mocked<S3Service>;
@@ -27,6 +29,10 @@ describe('ZipProcessor Dependency Injection', () => {
     // Mock CSVProcessor methods
     mockCSVProcessor.isCSVFile = jest.fn();
     mockCSVProcessor.processCSVStream = jest.fn();
+
+    // Mock memory monitor to always allow processing
+    (memoryMonitor.checkMemoryUsage as jest.Mock).mockReturnValue(true);
+    (memoryMonitor.isCircuitBreakerTripped as jest.Mock).mockReturnValue(false);
   });
 
   describe('Constructor Dependency Injection', () => {

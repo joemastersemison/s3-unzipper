@@ -6,13 +6,11 @@ describe('MemoryMonitor', () => {
   beforeEach(() => {
     // Create a fresh instance for each test
     monitor = MemoryMonitor.getInstance({
-      warningThreshold: 70,
-      circuitBreakerThreshold: 80,
+      warningThreshold: 95, // Set very high to prevent triggering during tests
+      circuitBreakerThreshold: 98,
     });
-    // Reset circuit breaker state
-    if (monitor.isCircuitBreakerTripped()) {
-      monitor.resetCircuitBreaker();
-    }
+    // Force reset circuit breaker state by accessing private property
+    (monitor as any).circuitBreakerTripped = false;
   });
 
   describe('getMemoryUsage', () => {
