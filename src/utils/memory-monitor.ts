@@ -167,7 +167,10 @@ export class MemoryMonitor {
    */
   updateThresholds(newThresholds: Partial<MemoryThresholds>): void {
     this.thresholds = { ...this.thresholds, ...newThresholds };
-    logger.info('Memory thresholds updated', this.thresholds);
+    logger.info('Memory thresholds updated', {
+      warningThreshold: this.thresholds.warningThreshold,
+      circuitBreakerThreshold: this.thresholds.circuitBreakerThreshold,
+    });
   }
 }
 
@@ -180,7 +183,7 @@ export const memoryMonitor = MemoryMonitor.getInstance();
  * Decorator function to wrap methods with memory checking
  */
 export function withMemoryCheck(operationName?: string) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {

@@ -44,11 +44,11 @@ export class DataSanitizer {
     const sanitizedParts = parts.map((part, index) => {
       // Don't sanitize directory names (except the last part which might be a filename)
       if (index < parts.length - 1 && !part.includes('.')) {
-        return this.sanitizeDirectoryName(part, { maskChar, visibleChars });
+        return DataSanitizer.sanitizeDirectoryName(part, { maskChar, visibleChars });
       }
 
       // Sanitize filename
-      return this.sanitizeFilename(part, { maskChar, visibleChars });
+      return DataSanitizer.sanitizeFilename(part, { maskChar, visibleChars });
     });
 
     return sanitizedParts.join('/');
@@ -60,46 +60,55 @@ export class DataSanitizer {
   static sanitizeFilename(filename: string, options: SanitizationOptions = {}): string {
     if (!filename) return '[empty-filename]';
 
-    const { maskChar = '*', visibleChars = 3 } = options;
+    const { maskChar = '*' } = options;
 
     // Check if it contains obvious PII patterns
     let sanitized = filename;
 
     // Mask email addresses
-    const emailRegex = new RegExp(this.EMAIL_REGEX.source, this.EMAIL_REGEX.flags);
+    const emailRegex = new RegExp(
+      DataSanitizer.EMAIL_REGEX.source,
+      DataSanitizer.EMAIL_REGEX.flags
+    );
     sanitized = sanitized.replace(emailRegex, match =>
-      this.maskString(match, { maskChar, visibleChars: 2 })
+      DataSanitizer.maskString(match, { maskChar, visibleChars: 2 })
     );
 
     // Mask phone numbers
-    const phoneRegex = new RegExp(this.PHONE_REGEX.source, this.PHONE_REGEX.flags);
+    const phoneRegex = new RegExp(
+      DataSanitizer.PHONE_REGEX.source,
+      DataSanitizer.PHONE_REGEX.flags
+    );
     sanitized = sanitized.replace(phoneRegex, match =>
-      this.maskString(match, { maskChar, visibleChars: 0 })
+      DataSanitizer.maskString(match, { maskChar, visibleChars: 0 })
     );
 
     // Mask SSN patterns
-    const ssnRegex = new RegExp(this.SSN_REGEX.source, this.SSN_REGEX.flags);
+    const ssnRegex = new RegExp(DataSanitizer.SSN_REGEX.source, DataSanitizer.SSN_REGEX.flags);
     sanitized = sanitized.replace(ssnRegex, match =>
-      this.maskString(match, { maskChar, visibleChars: 0 })
+      DataSanitizer.maskString(match, { maskChar, visibleChars: 0 })
     );
 
     // Mask credit card patterns
-    const ccRegex = new RegExp(this.CREDIT_CARD_REGEX.source, this.CREDIT_CARD_REGEX.flags);
+    const ccRegex = new RegExp(
+      DataSanitizer.CREDIT_CARD_REGEX.source,
+      DataSanitizer.CREDIT_CARD_REGEX.flags
+    );
     sanitized = sanitized.replace(ccRegex, match =>
-      this.maskString(match, { maskChar, visibleChars: 0 })
+      DataSanitizer.maskString(match, { maskChar, visibleChars: 0 })
     );
 
     // Mask personal identifier patterns
-    this.PERSONAL_IDENTIFIERS.forEach(pattern => {
+    DataSanitizer.PERSONAL_IDENTIFIERS.forEach(pattern => {
       const freshPattern = new RegExp(pattern.source, pattern.flags);
       sanitized = sanitized.replace(freshPattern, match =>
-        this.maskString(match, { maskChar, visibleChars: 2 })
+        DataSanitizer.maskString(match, { maskChar, visibleChars: 2 })
       );
     });
 
     // If filename is very long, truncate middle part but preserve extension
     if (sanitized.length > 50) {
-      const extension = this.getFileExtension(sanitized);
+      const extension = DataSanitizer.getFileExtension(sanitized);
       const baseName = sanitized.substring(0, sanitized.length - extension.length);
 
       if (baseName.length > 40) {
@@ -122,15 +131,15 @@ export class DataSanitizer {
     let sanitized = dirName;
 
     // Check for obvious PII patterns in directory names
-    this.PERSONAL_IDENTIFIERS.forEach(pattern => {
+    DataSanitizer.PERSONAL_IDENTIFIERS.forEach(pattern => {
       sanitized = sanitized.replace(pattern, match =>
-        this.maskString(match, { maskChar, visibleChars })
+        DataSanitizer.maskString(match, { maskChar, visibleChars })
       );
     });
 
     // Mask email addresses in directory names
-    sanitized = sanitized.replace(this.EMAIL_REGEX, match =>
-      this.maskString(match, { maskChar, visibleChars: 2 })
+    sanitized = sanitized.replace(DataSanitizer.EMAIL_REGEX, match =>
+      DataSanitizer.maskString(match, { maskChar, visibleChars: 2 })
     );
 
     return sanitized;
@@ -147,25 +156,25 @@ export class DataSanitizer {
     // Remove potential file paths that might contain sensitive info
     sanitized = sanitized.replace(/\/[^\s]+/g, match => {
       if (match.includes('/tmp/') || match.includes('/var/') || match.includes('/home/')) {
-        return this.sanitizeFilePath(match);
+        return DataSanitizer.sanitizeFilePath(match);
       }
       return match;
     });
 
     // Remove potential S3 URLs
-    sanitized = sanitized.replace(/https?:\/\/[^\/]+\.amazonaws\.com\/[^\s]+/g, match => {
-      return this.sanitizeS3Url(match);
+    sanitized = sanitized.replace(/https?:\/\/[^/]+\.amazonaws\.com\/[^\s]+/g, match => {
+      return DataSanitizer.sanitizeS3Url(match);
     });
 
     // Remove IP addresses
-    sanitized = sanitized.replace(this.IP_ADDRESS_REGEX, '[IP-ADDRESS]');
+    sanitized = sanitized.replace(DataSanitizer.IP_ADDRESS_REGEX, '[IP-ADDRESS]');
 
     // Remove email addresses
-    sanitized = sanitized.replace(this.EMAIL_REGEX, '[EMAIL]');
+    sanitized = sanitized.replace(DataSanitizer.EMAIL_REGEX, '[EMAIL]');
 
     // If context contains bucket/key info, use sanitized versions in the message
-    if (context && context.bucket && context.key) {
-      const sanitizedKey = this.sanitizeS3Key(context.key);
+    if (context?.bucket && context.key) {
+      const sanitizedKey = DataSanitizer.sanitizeS3Key(context.key);
       // Escape special regex characters in the key before using it in RegExp
       const escapedKey = context.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       sanitized = sanitized.replace(new RegExp(escapedKey, 'g'), sanitizedKey);
@@ -202,19 +211,19 @@ export class DataSanitizer {
           case 'inputKey':
           case 'outputKey':
           case 'outputPath':
-            sanitized[key] = this.sanitizeS3Key(value);
+            sanitized[key] = DataSanitizer.sanitizeS3Key(value);
             break;
           case 'fileName':
           case 'filename':
-            sanitized[key] = this.sanitizeFilename(value);
+            sanitized[key] = DataSanitizer.sanitizeFilename(value);
             break;
           case 'error':
-            sanitized[key] = this.sanitizeErrorMessage(value, context);
+            sanitized[key] = DataSanitizer.sanitizeErrorMessage(value, context);
             break;
           default:
             // Check if the value contains potential PII
-            if (this.containsPII(value)) {
-              sanitized[key] = this.maskString(value);
+            if (DataSanitizer.containsPII(value)) {
+              sanitized[key] = DataSanitizer.maskString(value);
             } else {
               sanitized[key] = value;
             }
@@ -223,11 +232,11 @@ export class DataSanitizer {
         if (key === 'error' && value.stack) {
           sanitized[key] = {
             ...value,
-            stack: this.sanitizeStackTrace(value.stack),
-            message: this.sanitizeErrorMessage(value.message, context),
+            stack: DataSanitizer.sanitizeStackTrace(value.stack),
+            message: DataSanitizer.sanitizeErrorMessage(value.message, context),
           };
         } else {
-          sanitized[key] = this.sanitizeLoggingContext(value);
+          sanitized[key] = DataSanitizer.sanitizeLoggingContext(value);
         }
       } else {
         sanitized[key] = value;
@@ -286,14 +295,14 @@ export class DataSanitizer {
     try {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname;
-      const bucket = hostname.split('.')[0];
+      const _bucket = hostname.split('.')[0];
       const pathParts = urlObj.pathname.split('/').filter(p => p);
 
       if (pathParts.length === 0) {
         return `https://[BUCKET].s3.amazonaws.com/`;
       }
 
-      const sanitizedKey = this.sanitizeS3Key(pathParts.join('/'));
+      const sanitizedKey = DataSanitizer.sanitizeS3Key(pathParts.join('/'));
       return `https://[BUCKET].s3.amazonaws.com/${sanitizedKey}`;
     } catch {
       return '[S3-URL]';
@@ -305,11 +314,11 @@ export class DataSanitizer {
    */
   private static containsPII(str: string): boolean {
     return (
-      this.EMAIL_REGEX.test(str) ||
-      this.PHONE_REGEX.test(str) ||
-      this.SSN_REGEX.test(str) ||
-      this.CREDIT_CARD_REGEX.test(str) ||
-      this.PERSONAL_IDENTIFIERS.some(pattern => pattern.test(str))
+      DataSanitizer.EMAIL_REGEX.test(str) ||
+      DataSanitizer.PHONE_REGEX.test(str) ||
+      DataSanitizer.SSN_REGEX.test(str) ||
+      DataSanitizer.CREDIT_CARD_REGEX.test(str) ||
+      DataSanitizer.PERSONAL_IDENTIFIERS.some(pattern => pattern.test(str))
     );
   }
 }

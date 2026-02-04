@@ -314,7 +314,10 @@ export class ErrorClassifier {
       return 'low';
     }
 
-    if (error.name.includes('Security') || error.message.includes('security')) {
+    if (
+      error.name.toLowerCase().includes('security') ||
+      error.message.toLowerCase().includes('security')
+    ) {
       return 'critical';
     }
 
@@ -328,8 +331,8 @@ export class ErrorClassifier {
     const summary: Record<string, any> = {
       errorName: error.name,
       errorMessage: sanitizeForLogging.errorMessage(error.message),
-      retryable: this.isRetryable(error),
-      severity: this.getSeverity(error),
+      retryable: ErrorClassifier.isRetryable(error),
+      severity: ErrorClassifier.getSeverity(error),
     };
 
     if ('context' in error && error.context) {

@@ -17,20 +17,20 @@ const configSchema = Joi.object({
   bucketName: Joi.string()
     .min(3)
     .max(63)
-    .pattern(/^[a-z0-9][a-z0-9\-]*[a-z0-9]$/)
+    .pattern(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/)
     .required()
     .messages({
       'string.pattern.base':
         'bucketName must be a valid S3 bucket name (lowercase alphanumeric and hyphens only)',
     }),
   inputPath: Joi.string()
-    .pattern(/^[a-zA-Z0-9\-_\/]*\/$/)
+    .pattern(/^[a-zA-Z0-9\-_/]*\/$/)
     .default('input/')
     .messages({
       'string.pattern.base': 'inputPath must be a valid S3 path ending with /',
     }),
   outputPath: Joi.string()
-    .pattern(/^[a-zA-Z0-9\-_\/]*\/$/)
+    .pattern(/^[a-zA-Z0-9\-_/]*\/$/)
     .default('output/')
     .messages({
       'string.pattern.base': 'outputPath must be a valid S3 path ending with /',
@@ -127,7 +127,7 @@ function parseIntSafely(
   if (!value) return defaultValue;
 
   const parsed = parseInt(value, 10);
-  if (isNaN(parsed)) return defaultValue;
+  if (Number.isNaN(parsed)) return defaultValue;
 
   return Math.max(min, Math.min(max, parsed));
 }

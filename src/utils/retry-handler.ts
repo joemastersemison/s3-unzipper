@@ -3,8 +3,8 @@
  * Provides secure retry logic without exposing sensitive data in error logs
  */
 
-import logger from './logger';
 import { sanitizeForLogging } from './data-sanitizer';
+import logger from './logger';
 
 export interface RetryOptions {
   maxAttempts: number;
@@ -55,7 +55,7 @@ export class RetryHandler {
     context: RetryContext,
     options: Partial<RetryOptions> = {}
   ): Promise<T> {
-    const opts = { ...this.DEFAULT_OPTIONS, ...options };
+    const opts = { ...RetryHandler.DEFAULT_OPTIONS, ...options };
     let lastError: Error | undefined;
     let attempt = 0;
 
@@ -74,7 +74,9 @@ export class RetryHandler {
         const startTime = Date.now();
 
         // Add timeout wrapper if specified
-        const result = opts.timeoutMs ? await this.withTimeout(fn(), opts.timeoutMs) : await fn();
+        const result = opts.timeoutMs
+          ? await RetryHandler.withTimeout(fn(), opts.timeoutMs)
+          : await fn();
 
         const duration = Date.now() - startTime;
 
@@ -95,7 +97,7 @@ export class RetryHandler {
         return result;
       } catch (error) {
         lastError = error as Error;
-        const isRetryable = this.isRetryableError(lastError, opts.retryableErrors);
+        const isRetryable = RetryHandler.isRetryableError(lastError, opts.retryableErrors);
         const isLastAttempt = attempt >= opts.maxAttempts;
 
         // Sanitize error information before logging
@@ -124,14 +126,14 @@ export class RetryHandler {
           break;
         }
 
-        const delayMs = this.calculateDelay(attempt - 1, opts);
+        const delayMs = RetryHandler.calculateDelay(attempt - 1, opts);
         logger.warn('Operation failed, retrying after delay', {
           ...logContext,
           delayMs,
           nextAttempt: attempt + 1,
         });
 
-        await this.delay(delayMs);
+        await RetryHandler.delay(delayMs);
       }
     }
 
@@ -175,7 +177,7 @@ export class RetryHandler {
       maxDelayMs: 16000,
       backoffMultiplier: 2,
       retryableErrors: [
-        ...this.DEFAULT_RETRYABLE_ERRORS,
+        ...RetryHandler.DEFAULT_RETRYABLE_ERRORS,
         'NoSuchBucket',
         'AccessDenied', // Sometimes transient due to eventual consistency
         'RequestTimeoutError',
@@ -185,7 +187,7 @@ export class RetryHandler {
       timeoutMs: 45000, // S3 operations can take time
     };
 
-    return this.withRetry(operation, context, s3RetryOptions);
+    return RetryHandler.withRetry(operation, context, s3RetryOptions);
   }
 
   /**
@@ -211,7 +213,7 @@ export class RetryHandler {
       timeoutMs: 30000,
     };
 
-    return this.withRetry(operation, context, csvRetryOptions);
+    return RetryHandler.withRetry(operation, context, csvRetryOptions);
   }
 
   /**
@@ -235,7 +237,7 @@ export class RetryHandler {
    */
   private static calculateDelay(attemptNumber: number, options: RetryOptions): number {
     const exponentialDelay = Math.min(
-      options.baseDelayMs * Math.pow(options.backoffMultiplier, attemptNumber),
+      options.baseDelayMs * options.backoffMultiplier ** attemptNumber,
       options.maxDelayMs
     );
 

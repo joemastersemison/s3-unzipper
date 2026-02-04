@@ -23,7 +23,7 @@ describe('S3ClientSingleton', () => {
     it('should return the same instance on subsequent calls', () => {
       const _client1 = getS3Client();
       const client2 = getS3Client();
-      expect(client1).toBe(client2);
+      expect(_client1).toBe(client2);
     });
   });
 

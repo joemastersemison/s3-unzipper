@@ -1,13 +1,13 @@
 import type { Context, S3Event, S3Handler } from 'aws-lambda';
+import { CSVProcessor } from '../services/csv-processor';
 import { S3Service } from '../services/s3-service';
 import { ZipProcessor } from '../services/zip-processor';
-import { CSVProcessor } from '../services/csv-processor';
 import type { ProcessingResult, S3EventRecord } from '../types';
 import config from '../utils/config';
 import logger from '../utils/logger';
-import { validateS3Event } from '../utils/validation';
 import { memoryMonitor } from '../utils/memory-monitor';
 import { getS3ClientInfo } from '../utils/s3-client-singleton';
+import { validateS3Event } from '../utils/validation';
 
 /**
  * AWS Lambda handler for processing S3 ObjectCreated events on zip files
@@ -31,7 +31,7 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
     initialMemoryUsagePercentage: Math.round(initialMemory.usagePercentage * 100) / 100,
     initialHeapUsedMB: Math.round(initialMemory.heapUsed / 1024 / 1024),
     s3ClientReused: s3ClientInfo.isInitialized,
-    s3ClientAgeDaysMs: s3ClientInfo.ageMs,
+    s3ClientAgeDaysMs: s3ClientInfo.ageMs ?? undefined,
   });
 
   // Check initial memory state
@@ -135,7 +135,9 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
     const errorMsg = `S3 Unzipper Lambda failed: ${error instanceof Error ? error.message : String(error)}`;
     logger.error(errorMsg, error as Error, {
       requestId: context.awsRequestId,
-      results,
+      totalResultsCount: results.length,
+      successfulResults: results.filter(r => r.success).length,
+      failedResults: results.filter(r => !r.success).length,
     });
 
     throw new Error(errorMsg);

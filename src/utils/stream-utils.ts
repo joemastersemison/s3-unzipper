@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
-import { memoryMonitor } from './memory-monitor';
 import logger from './logger';
+import { memoryMonitor } from './memory-monitor';
 
 /**
  * Converts a readable stream to a Buffer by collecting all chunks

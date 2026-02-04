@@ -1,10 +1,9 @@
-import * as yauzl from 'yauzl';
-import type { Readable } from 'node:stream';
+import type * as yauzl from 'yauzl';
+import type { CSVProcessor } from '../services/csv-processor';
+import type { S3Service } from '../services/s3-service';
 import type { ProcessingContext } from '../types';
-import { S3Service } from '../services/s3-service';
-import { CSVProcessor } from '../services/csv-processor';
-import { openZipEntryStream } from './zip-utils';
 import logger from './logger';
+import { openZipEntryStream } from './zip-utils';
 
 export interface FileUploadOptions {
   bucket: string;

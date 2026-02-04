@@ -1,20 +1,18 @@
-import * as yauzl from 'yauzl';
 import * as path from 'node:path';
+import type * as yauzl from 'yauzl';
 import type { ProcessingContext, ProcessingResult, ZipEntry } from '../types';
 import config from '../utils/config';
-import logger from '../utils/logger';
-import { createZipFileFromBuffer } from '../utils/zip-utils';
 import { FileUploadHandler } from '../utils/file-upload-handler';
+import logger from '../utils/logger';
+import { memoryMonitor } from '../utils/memory-monitor';
+import { createZipFileFromBuffer } from '../utils/zip-utils';
 import { CSVProcessor } from './csv-processor';
 import { getFilenameDebugInfo } from './filename-parser';
 import { S3Service } from './s3-service';
-import { memoryMonitor } from '../utils/memory-monitor';
-import { retryWithBackoff } from '../utils/retry-handler';
-import { createErrorContext } from '../utils/error-context';
 
 export class ZipProcessor {
-  private s3Service: S3Service;
-  private csvProcessor: CSVProcessor;
+  public s3Service: S3Service;
+  public csvProcessor: CSVProcessor;
   private uploadHandler: FileUploadHandler;
 
   /**
@@ -30,6 +28,7 @@ export class ZipProcessor {
     let sanitized = path.basename(filename);
 
     // Remove or replace dangerous characters
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: Security sanitization requires control character replacement
     sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
 
     // Prevent empty filename after sanitization
@@ -143,7 +142,7 @@ export class ZipProcessor {
     };
 
     // Track decompression limits to prevent zip bombs
-    let totalUncompressedSize = 0;
+    const totalUncompressedSize = 0;
     const maxUncompressedSize = 200 * 1024 * 1024; // 200MB total decompressed
     const maxFileCount = 10000; // Maximum number of files
 
@@ -345,7 +344,10 @@ export class ZipProcessor {
       fileName: entry.fileName,
       stemName,
       sizeBytes: entry.uncompressedSize,
-      debugInfo,
+      originalFilename: debugInfo.originalFilename,
+      isValid: debugInfo.isValid,
+      baseName: debugInfo.baseName,
+      extension: debugInfo.extension,
       requestId: context.requestId,
     });
 

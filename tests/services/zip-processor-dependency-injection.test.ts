@@ -1,6 +1,6 @@
-import { ZipProcessor } from '../../src/services/zip-processor';
-import { S3Service } from '../../src/services/s3-service';
 import { CSVProcessor } from '../../src/services/csv-processor';
+import { S3Service } from '../../src/services/s3-service';
+import { ZipProcessor } from '../../src/services/zip-processor';
 
 // Mock the dependencies
 jest.mock('../../src/services/s3-service');
@@ -35,7 +35,7 @@ describe('ZipProcessor Dependency Injection', () => {
 
       expect(zipProcessor).toBeDefined();
       // The processor should use the injected S3Service
-      expect(zipProcessor['s3Service']).toBe(mockS3Service);
+      expect(zipProcessor.s3Service).toBe(mockS3Service);
     });
 
     it('should use provided CSVProcessor instance', () => {
@@ -43,7 +43,7 @@ describe('ZipProcessor Dependency Injection', () => {
 
       expect(zipProcessor).toBeDefined();
       // The processor should use the injected CSVProcessor
-      expect(zipProcessor['csvProcessor']).toBe(mockCSVProcessor);
+      expect(zipProcessor.csvProcessor).toBe(mockCSVProcessor);
     });
 
     it('should create default S3Service when not provided', () => {
@@ -51,7 +51,7 @@ describe('ZipProcessor Dependency Injection', () => {
 
       expect(zipProcessor).toBeDefined();
       // Should have created a default S3Service instance
-      expect(zipProcessor['s3Service']).toBeInstanceOf(S3Service);
+      expect(zipProcessor.s3Service).toBeInstanceOf(S3Service);
     });
 
     it('should create default CSVProcessor when not provided', () => {
@@ -59,14 +59,14 @@ describe('ZipProcessor Dependency Injection', () => {
 
       expect(zipProcessor).toBeDefined();
       // Should have created a default CSVProcessor instance
-      expect(zipProcessor['csvProcessor']).toBeInstanceOf(CSVProcessor);
+      expect(zipProcessor.csvProcessor).toBeInstanceOf(CSVProcessor);
     });
 
     it('should use both injected dependencies', () => {
       const zipProcessor = new ZipProcessor(mockS3Service, mockCSVProcessor);
 
-      expect(zipProcessor['s3Service']).toBe(mockS3Service);
-      expect(zipProcessor['csvProcessor']).toBe(mockCSVProcessor);
+      expect(zipProcessor.s3Service).toBe(mockS3Service);
+      expect(zipProcessor.csvProcessor).toBe(mockCSVProcessor);
     });
   });
 
@@ -96,7 +96,7 @@ describe('ZipProcessor Dependency Injection', () => {
       const zipProcessor = new ZipProcessor(mockS3Service, mockCSVProcessor);
 
       // Test CSV detection through the injected processor
-      const isCSV = zipProcessor['csvProcessor'].isCSVFile('test.csv');
+      const isCSV = zipProcessor.csvProcessor.isCSVFile('test.csv');
 
       expect(mockCSVProcessor.isCSVFile).toHaveBeenCalledWith('test.csv');
       expect(isCSV).toBe(true);
@@ -111,7 +111,7 @@ describe('ZipProcessor Dependency Injection', () => {
 
       const zipProcessor = new ZipProcessor(mockS3Service, customCSVProcessor);
 
-      expect(zipProcessor['csvProcessor']).toBe(customCSVProcessor);
+      expect(zipProcessor.csvProcessor).toBe(customCSVProcessor);
     });
   });
 
@@ -134,8 +134,8 @@ describe('ZipProcessor Dependency Injection', () => {
 
       const zipProcessor = new ZipProcessor(mockS3Service, mockCSVProcessor);
 
-      expect(zipProcessor['csvProcessor'].isCSVFile('data.csv')).toBe(true);
-      expect(zipProcessor['csvProcessor'].isCSVFile('image.jpg')).toBe(false);
+      expect(zipProcessor.csvProcessor.isCSVFile('data.csv')).toBe(true);
+      expect(zipProcessor.csvProcessor.isCSVFile('image.jpg')).toBe(false);
 
       expect(mockCSVProcessor.isCSVFile).toHaveBeenCalledTimes(2);
     });
@@ -147,13 +147,13 @@ describe('ZipProcessor Dependency Injection', () => {
       };
 
       // Mock the FileUploadHandler constructor
-      const FileUploadHandlerMock = jest.fn().mockImplementation(() => mockFileUploadHandler);
+      const _FileUploadHandlerMock = jest.fn().mockImplementation(() => mockFileUploadHandler);
 
       const zipProcessor = new ZipProcessor(mockS3Service, mockCSVProcessor);
 
       // Verify that dependencies are properly injected
-      expect(zipProcessor['s3Service']).toBe(mockS3Service);
-      expect(zipProcessor['csvProcessor']).toBe(mockCSVProcessor);
+      expect(zipProcessor.s3Service).toBe(mockS3Service);
+      expect(zipProcessor.csvProcessor).toBe(mockCSVProcessor);
     });
   });
 
@@ -178,7 +178,7 @@ describe('ZipProcessor Dependency Injection', () => {
       const zipProcessor = new ZipProcessor(mockS3Service, mockCSVProcessor);
 
       expect(() => {
-        zipProcessor['csvProcessor'].isCSVFile('test.csv');
+        zipProcessor.csvProcessor.isCSVFile('test.csv');
       }).toThrow('CSV processor error');
     });
   });

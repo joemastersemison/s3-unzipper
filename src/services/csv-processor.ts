@@ -1,10 +1,10 @@
 import type { Readable } from 'node:stream';
 import * as csv from 'fast-csv';
 import type { CSVProcessingResult, CSVProcessorOptions } from '../types';
+import { createErrorContext } from '../utils/error-context';
 import logger from '../utils/logger';
 import { memoryMonitor } from '../utils/memory-monitor';
 import { retryWithBackoff } from '../utils/retry-handler';
-import { createErrorContext } from '../utils/error-context';
 
 export class CSVProcessor {
   private options: CSVProcessorOptions;
@@ -35,7 +35,7 @@ export class CSVProcessor {
         operation: 'csv_process_start',
       });
 
-      const rows: any[][] = [];
+      const rows: string[][] = [];
       let hasHeaders = false;
       let rowCount = 0;
       const timestamp = this.getCurrentTimestamp();
@@ -48,7 +48,7 @@ export class CSVProcessor {
           trim: true,
         });
 
-        parseStream.on('data', (row: any[]) => {
+        parseStream.on('data', (row: string[]) => {
           try {
             rowCount++;
 
@@ -185,7 +185,7 @@ export class CSVProcessor {
    * Attempts to detect if the first row contains headers
    * Uses more conservative heuristics to avoid false positives
    */
-  private detectHeaders(firstRow: any[]): boolean {
+  private detectHeaders(firstRow: string[]): boolean {
     if (!firstRow || firstRow.length === 0) {
       return false;
     }
@@ -244,7 +244,7 @@ export class CSVProcessor {
   /**
    * Converts rows array back to CSV format
    */
-  private convertRowsToCSV(rows: any[][]): string {
+  private convertRowsToCSV(rows: string[][]): string {
     return rows
       .map(row => {
         return row
@@ -280,23 +280,6 @@ export class CSVProcessor {
   }
 
   /**
-   * Handles malformed CSV files with appropriate fallback
-   */
-  private handleMalformedCSV(fileName: string, error: Error): Buffer | null {
-    logger.warn('CSV file is malformed, skipping processing', {
-      fileName,
-      error: error.message,
-      operation: 'csv_malformed_fallback',
-    });
-
-    if (this.options.skipMalformed) {
-      return null; // Signal to use original file
-    } else {
-      throw error;
-    }
-  }
-
-  /**
    * Validates CSV file structure without full processing
    */
   async validateCSVStructure(stream: Readable, _fileName: string): Promise<boolean> {
@@ -310,7 +293,7 @@ export class CSVProcessor {
           ignoreEmpty: true,
         });
 
-        parseStream.on('data', (_row: any[]) => {
+        parseStream.on('data', (_row: string[]) => {
           rowCount++;
 
           // Stop after checking a few rows to minimize processing

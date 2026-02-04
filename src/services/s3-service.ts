@@ -3,16 +3,15 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
-  S3Client,
+  type S3Client,
 } from '@aws-sdk/client-s3';
 import type { S3ObjectInfo, S3StreamOptions, UploadOptions } from '../types';
-import config from '../utils/config';
+import { createErrorContext } from '../utils/error-context';
 import logger from '../utils/logger';
-import { streamToBuffer, validateStream } from '../utils/stream-utils';
-import { getS3Client } from '../utils/s3-client-singleton';
 import { memoryMonitor } from '../utils/memory-monitor';
 import { retryWithBackoff } from '../utils/retry-handler';
-import { createErrorContext } from '../utils/error-context';
+import { getS3Client } from '../utils/s3-client-singleton';
+import { streamToBuffer, validateStream } from '../utils/stream-utils';
 
 export class S3Service {
   private s3Client: S3Client;

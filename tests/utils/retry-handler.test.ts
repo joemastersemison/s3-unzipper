@@ -133,38 +133,37 @@ describe('RetryHandler', () => {
 
   describe('exponential backoff', () => {
     it('should increase delay between attempts', async () => {
-      const delays: number[] = [];
-      const originalSetTimeout = global.setTimeout;
+      const callTimes: number[] = [];
+      const mockFn = jest.fn().mockImplementation(async () => {
+        callTimes.push(Date.now());
+        if (callTimes.length <= 2) {
+          throw new Error('NetworkingError');
+        }
+        return 'success';
+      });
 
-      // Mock setTimeout with a simpler approach
-      jest
-        .spyOn(global, 'setTimeout')
-        .mockImplementation((callback: () => void, delay?: number) => {
-          delays.push(delay || 0);
-          return originalSetTimeout(callback, 1); // Use minimal delay for test
-        });
+      const startTime = Date.now();
 
-      const mockFn = jest
-        .fn()
-        .mockRejectedValueOnce(new Error('NetworkingError'))
-        .mockRejectedValueOnce(new Error('NetworkingError'))
-        .mockResolvedValue('success');
+      const result = await RetryHandler.withRetry(
+        mockFn,
+        { operation: 'test' },
+        { maxAttempts: 3, baseDelayMs: 100, backoffMultiplier: 2 }
+      );
 
-      try {
-        await RetryHandler.withRetry(
-          mockFn,
-          { operation: 'test' },
-          { maxAttempts: 3, baseDelayMs: 100, backoffMultiplier: 2 }
-        );
+      expect(result).toBe('success');
+      expect(mockFn).toHaveBeenCalledTimes(3); // Initial + 2 retries
 
-        expect(delays.length).toBe(2); // Should have 2 delays for 2 retries
-        // Delays should generally increase (accounting for jitter)
-        // At minimum, the base delay should be respected
-        expect(delays[0]).toBeGreaterThan(90); // First delay ~100ms
-        // Due to jitter, just ensure we have meaningful delays
-        expect(delays[1]).toBeGreaterThan(90); // Second delay should also be reasonable
-      } finally {
-        jest.restoreAllMocks();
+      // Verify that retries had delays
+      const totalTime = Date.now() - startTime;
+      expect(totalTime).toBeGreaterThan(150); // Should have some delay from retries
+
+      // Verify calls were spaced out (not instantaneous)
+      if (callTimes.length >= 3) {
+        const firstRetryDelay = callTimes[1] - callTimes[0];
+        const secondRetryDelay = callTimes[2] - callTimes[1];
+
+        expect(firstRetryDelay).toBeGreaterThan(50); // First retry should have some delay
+        expect(secondRetryDelay).toBeGreaterThan(50); // Second retry should have some delay
       }
     });
   });

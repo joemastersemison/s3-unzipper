@@ -1,8 +1,8 @@
 import {
-  ErrorContextBuilder,
   CommonErrorContexts,
-  ErrorClassifier,
   createErrorContext,
+  ErrorClassifier,
+  ErrorContextBuilder,
 } from '../../src/utils/error-context';
 
 describe('ErrorContextBuilder', () => {

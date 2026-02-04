@@ -1,6 +1,6 @@
 import type { FilenameComponents } from '../types';
 import logger from '../utils/logger';
-import { sanitizeFilename, isValidS3PathComponent } from '../utils/validation';
+import { isValidS3PathComponent, sanitizeFilename } from '../utils/validation';
 
 /**
  * Extracts stem name from complex filenames with date patterns
