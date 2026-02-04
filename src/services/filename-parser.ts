@@ -56,7 +56,7 @@ export function parseFilename(filename: string): FilenameComponents {
   const dateParts: string[] = [];
   const nonDateParts: string[] = [];
 
-  parts.forEach(part => {
+  for (const part of parts) {
     if (datePattern.test(part)) {
       dateParts.push(part);
     } else {
@@ -68,7 +68,7 @@ export function parseFilename(filename: string): FilenameComponents {
         nonDateParts.push(sanitizedPart);
       }
     }
-  });
+  }
 
   // Extract stem name from non-date parts
   const stemName = extractStemFromParts(nonDateParts);

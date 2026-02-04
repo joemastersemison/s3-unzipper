@@ -183,9 +183,11 @@ export const memoryMonitor = MemoryMonitor.getInstance();
  * Decorator function to wrap methods with memory checking
  */
 export function withMemoryCheck(operationName?: string) {
+  // biome-ignore lint/suspicious/noExplicitAny: Decorator target parameter requires any type
   return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
 
+    // biome-ignore lint/suspicious/noExplicitAny: Generic method arguments require any[] type
     descriptor.value = async function (...args: any[]) {
       const monitor = MemoryMonitor.getInstance();
 

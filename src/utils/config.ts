@@ -120,13 +120,13 @@ function sanitizeLogLevel(logLevel?: string): string | undefined {
  */
 function parseIntSafely(
   value?: string,
-  defaultValue: number = 0,
-  min: number = 0,
+  defaultValue = 0,
+  min = 0,
   max: number = Number.MAX_SAFE_INTEGER
 ): number {
   if (!value) return defaultValue;
 
-  const parsed = parseInt(value, 10);
+  const parsed = Number.parseInt(value, 10);
   if (Number.isNaN(parsed)) return defaultValue;
 
   return Math.max(min, Math.min(max, parsed));

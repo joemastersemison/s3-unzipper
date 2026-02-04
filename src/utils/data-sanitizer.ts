@@ -13,6 +13,7 @@ export interface SanitizationOptions {
  * Sanitizes file paths and S3 keys to remove potentially sensitive information
  * while preserving useful debugging context
  */
+// biome-ignore lint/complexity/noStaticOnlyClass: Utility class pattern for data sanitization functions
 export class DataSanitizer {
   private static readonly EMAIL_REGEX = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}/g;
   private static readonly PHONE_REGEX =
@@ -148,6 +149,7 @@ export class DataSanitizer {
   /**
    * Sanitizes error messages to remove sensitive information
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic context parameter requires any type for flexibility
   static sanitizeErrorMessage(message: string, context?: Record<string, any>): string {
     if (!message) return '[empty-message]';
 
@@ -201,7 +203,9 @@ export class DataSanitizer {
   /**
    * Creates a sanitized logging context that removes sensitive information
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic logging context requires any type for flexibility
   static sanitizeLoggingContext(context: Record<string, any>): Record<string, any> {
+    // biome-ignore lint/suspicious/noExplicitAny: Sanitized context object requires any type for generic values
     const sanitized: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(context)) {
@@ -299,7 +303,7 @@ export class DataSanitizer {
       const pathParts = urlObj.pathname.split('/').filter(p => p);
 
       if (pathParts.length === 0) {
-        return `https://[BUCKET].s3.amazonaws.com/`;
+        return 'https://[BUCKET].s3.amazonaws.com/';
       }
 
       const sanitizedKey = DataSanitizer.sanitizeS3Key(pathParts.join('/'));
@@ -329,8 +333,10 @@ export class DataSanitizer {
 export const sanitizeForLogging = {
   s3Key: (key: string) => DataSanitizer.sanitizeS3Key(key),
   filename: (filename: string) => DataSanitizer.sanitizeFilename(filename),
+  // biome-ignore lint/suspicious/noExplicitAny: Generic context parameter requires any type for flexibility
   errorMessage: (message: string, context?: Record<string, any>) =>
     DataSanitizer.sanitizeErrorMessage(message, context),
+  // biome-ignore lint/suspicious/noExplicitAny: Generic logging context requires any type for flexibility
   context: (context: Record<string, any>) => DataSanitizer.sanitizeLoggingContext(context),
   stackTrace: (stack: string) => DataSanitizer.sanitizeStackTrace(stack),
 };

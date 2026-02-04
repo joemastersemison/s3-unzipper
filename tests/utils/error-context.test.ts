@@ -132,9 +132,11 @@ describe('ErrorClassifier', () => {
   });
 
   it('should respect explicit retryable flag', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: Test error object requires any type to add custom properties
     const explicitlyRetryable = new Error('Test error') as any;
     explicitlyRetryable.retryable = true;
 
+    // biome-ignore lint/suspicious/noExplicitAny: Test error object requires any type to add custom properties
     const explicitlyNonRetryable = new Error('Test error') as any;
     explicitlyNonRetryable.retryable = false;
 
@@ -155,6 +157,7 @@ describe('ErrorClassifier', () => {
   });
 
   it('should respect explicit severity', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: Test error object requires any type to add custom properties
     const error = new Error('Test error') as any;
     error.severity = 'critical';
 

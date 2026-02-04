@@ -60,7 +60,7 @@ export class S3Service {
             .s3('s3_download', bucket, key)
             .setPhase('response_validation')
             .setTiming(startTime)
-            .createError(`No body returned for object`, undefined, {
+            .createError('No body returned for object', undefined, {
               errorCode: 'EMPTY_RESPONSE_BODY',
               retryable: true,
               severity: 'medium',
@@ -69,7 +69,7 @@ export class S3Service {
         }
 
         // Convert stream to buffer
-        const stream = validateStream(response.Body as Readable, `No body returned for object`);
+        const stream = validateStream(response.Body as Readable, 'No body returned for object');
 
         // Check memory before buffer conversion
         if (!memoryMonitor.checkMemoryUsage('s3_stream_to_buffer')) {

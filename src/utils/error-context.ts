@@ -13,6 +13,7 @@ export interface ErrorContext {
   key?: string;
   filename?: string;
   requestId?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: Generic metadata requires any type for flexibility
   metadata?: Record<string, any>;
   timing?: {
     startTime: Date;
@@ -86,6 +87,7 @@ export class ErrorContextBuilder {
   /**
    * Adds metadata (will be sanitized)
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic metadata parameter requires any type for flexibility
   setMetadata(metadata: Record<string, any>): this {
     this.context.metadata = sanitizeForLogging.context(metadata);
     return this;
@@ -156,6 +158,7 @@ export class ErrorContextBuilder {
 /**
  * Pre-configured error context builders for common scenarios
  */
+// biome-ignore lint/complexity/noStaticOnlyClass: Factory class pattern for error context builders
 export class CommonErrorContexts {
   /**
    * Creates error context for S3 operations
@@ -266,6 +269,7 @@ export class CommonErrorContexts {
 /**
  * Error classification utilities
  */
+// biome-ignore lint/complexity/noStaticOnlyClass: Utility class pattern for error classification functions
 export class ErrorClassifier {
   /**
    * Determines if an error is retryable based on context and error type
@@ -327,7 +331,9 @@ export class ErrorClassifier {
   /**
    * Creates a sanitized error summary for logging
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Error summary requires any type for generic error properties
   static createErrorSummary(error: Error | StructuredError): Record<string, any> {
+    // biome-ignore lint/suspicious/noExplicitAny: Error summary object requires any type for flexibility
     const summary: Record<string, any> = {
       errorName: error.name,
       errorMessage: sanitizeForLogging.errorMessage(error.message),

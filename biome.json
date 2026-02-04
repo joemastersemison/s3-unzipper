@@ -5,19 +5,13 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "noUnusedVariables": {
-          "level": "error",
-          "options": {
-            "ignoreRestSiblings": true
-          }
-        }
+        "noUnusedVariables": "error"
       },
       "style": {
         "useConst": "error",
         "useTemplate": "error"
       },
       "suspicious": {
-        "noVar": "error",
         "noConsole": "warn",
         "noExplicitAny": "warn"
       }
@@ -42,13 +36,12 @@
     }
   },
   "files": {
-    "includes": [
-      "src/**/*",
-      "tests/**/*",
-      "!**/dist/**",
-      "!**/coverage/**",
-      "!**/node_modules/**",
-      "!**/.aws-sam/**"
+    "includes": ["src/**/*", "tests/**/*"],
+    "experimentalScannerIgnores": [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "**/.aws-sam/**"
     ]
   }
 }

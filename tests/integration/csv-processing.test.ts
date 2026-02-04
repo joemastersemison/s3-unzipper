@@ -120,11 +120,14 @@ describe.skip('CSV Processing Integration Tests', () => {
 
     // Mock S3 getObject to return the zip file
     s3Mock.on(GetObjectCommand).resolves({
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock requires any type for stream compatibility
       Body: Readable.from([mockZipBuffer]) as any as any,
     });
 
     // Track PutObject calls to verify CSV processing
+    // biome-ignore lint/suspicious/noExplicitAny: Test array requires any type for mock call tracking
     const putObjectCalls: any[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Test mock parameter requires any type for flexibility
     s3Mock.on(PutObjectCommand).callsFake((params: any) => {
       putObjectCalls.push(params);
       return Promise.resolve({});
@@ -134,6 +137,7 @@ describe.skip('CSV Processing Integration Tests', () => {
     const context = createMockContext();
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Test handler callback parameter requires any type
       await handler(event, context, {} as any);
 
       // Verify that files were uploaded
@@ -161,10 +165,13 @@ describe.skip('CSV Processing Integration Tests', () => {
     const mockZipBuffer = Buffer.from('mock-mixed-zip-content');
 
     s3Mock.on(GetObjectCommand).resolves({
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock requires any type for stream compatibility
       Body: Readable.from([mockZipBuffer]) as any,
     });
 
+    // biome-ignore lint/suspicious/noExplicitAny: Test array requires any type for mock call tracking
     const putObjectCalls: any[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Test mock parameter requires any type for flexibility
     s3Mock.on(PutObjectCommand).callsFake((params: any) => {
       putObjectCalls.push(params);
       return Promise.resolve({});
@@ -174,6 +181,7 @@ describe.skip('CSV Processing Integration Tests', () => {
     const context = createMockContext();
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Test handler callback parameter requires any type
       await handler(event, context, {} as any);
     } catch (_error) {
       // Expected due to mock zip format
@@ -191,10 +199,13 @@ describe.skip('CSV Processing Integration Tests', () => {
     const mockZipBuffer = createZipWithCSV();
 
     s3Mock.on(GetObjectCommand).resolves({
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock requires any type for stream compatibility
       Body: Readable.from([mockZipBuffer]) as any,
     });
 
+    // biome-ignore lint/suspicious/noExplicitAny: Test array requires any type for mock call tracking
     const putObjectCalls: any[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Test mock parameter requires any type for flexibility
     s3Mock.on(PutObjectCommand).callsFake((params: any) => {
       putObjectCalls.push(params);
       return Promise.resolve({});
@@ -204,6 +215,7 @@ describe.skip('CSV Processing Integration Tests', () => {
     const context = createMockContext();
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Test handler callback parameter requires any type
       await handler(event, context, {} as any);
     } catch (_error) {
       // Expected due to mock zip format
@@ -222,10 +234,13 @@ describe.skip('CSV Processing Integration Tests', () => {
     const mockZipBuffer = Buffer.from(`PK${malformedCSV}PK`);
 
     s3Mock.on(GetObjectCommand).resolves({
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock requires any type for stream compatibility
       Body: Readable.from([mockZipBuffer]) as any,
     });
 
+    // biome-ignore lint/suspicious/noExplicitAny: Test array requires any type for mock call tracking
     const putObjectCalls: any[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Test mock parameter requires any type for flexibility
     s3Mock.on(PutObjectCommand).callsFake((params: any) => {
       putObjectCalls.push(params);
       return Promise.resolve({});
@@ -235,6 +250,7 @@ describe.skip('CSV Processing Integration Tests', () => {
     const context = createMockContext();
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Test handler callback parameter requires any type
       await handler(event, context, {} as any);
     } catch (_error) {
       // Expected due to mock zip format, but should handle malformed CSV gracefully
@@ -251,10 +267,13 @@ describe.skip('CSV Processing Integration Tests', () => {
     const mockZipBuffer = createZipWithCSV();
 
     s3Mock.on(GetObjectCommand).resolves({
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock requires any type for stream compatibility
       Body: Readable.from([mockZipBuffer]) as any,
     });
 
+    // biome-ignore lint/suspicious/noExplicitAny: Test array requires any type for mock call tracking
     const putObjectCalls: any[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Test mock parameter requires any type for flexibility
     s3Mock.on(PutObjectCommand).callsFake((params: any) => {
       putObjectCalls.push(params);
       return Promise.resolve({});
@@ -264,6 +283,7 @@ describe.skip('CSV Processing Integration Tests', () => {
     const context = createMockContext();
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Test handler callback parameter requires any type
       await handler(event, context, {} as any);
 
       // Check if custom column name is used
@@ -286,10 +306,13 @@ describe.skip('CSV Processing Integration Tests', () => {
     const mockZipBuffer = Buffer.from('mock-organized-zip');
 
     s3Mock.on(GetObjectCommand).resolves({
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock requires any type for stream compatibility
       Body: Readable.from([mockZipBuffer]) as any,
     });
 
+    // biome-ignore lint/suspicious/noExplicitAny: Test array requires any type for mock call tracking
     const putObjectCalls: any[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Test mock parameter requires any type for flexibility
     s3Mock.on(PutObjectCommand).callsFake((params: any) => {
       putObjectCalls.push(params);
       return Promise.resolve({});
@@ -299,6 +322,7 @@ describe.skip('CSV Processing Integration Tests', () => {
     const context = createMockContext();
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Test handler callback parameter requires any type
       await handler(event, context, {} as any);
 
       // Verify that output paths follow the stem-based organization pattern
@@ -325,10 +349,13 @@ describe.skip('CSV Processing Integration Tests', () => {
     const mockZipBuffer = Buffer.from(`PK${largeCsv}PK`);
 
     s3Mock.on(GetObjectCommand).resolves({
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock requires any type for stream compatibility
       Body: Readable.from([mockZipBuffer]) as any,
     });
 
+    // biome-ignore lint/suspicious/noExplicitAny: Test array requires any type for mock call tracking
     const putObjectCalls: any[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Test mock parameter requires any type for flexibility
     s3Mock.on(PutObjectCommand).callsFake((params: any) => {
       putObjectCalls.push(params);
       return Promise.resolve({});
@@ -340,6 +367,7 @@ describe.skip('CSV Processing Integration Tests', () => {
     const startMemory = process.memoryUsage().heapUsed;
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Test handler callback parameter requires any type
       await handler(event, context, {} as any);
     } catch (_error) {
       // Expected due to mock zip format

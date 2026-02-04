@@ -22,6 +22,7 @@ export interface RetryContext {
   requestId?: string;
 }
 
+// biome-ignore lint/complexity/noStaticOnlyClass: Utility class pattern for retry operations
 export class RetryHandler {
   private static readonly DEFAULT_RETRYABLE_ERRORS = [
     'NetworkingError',
