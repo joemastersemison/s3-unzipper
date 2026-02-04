@@ -2,18 +2,8 @@ import type { Context, S3Event } from 'aws-lambda';
 import { handler } from '../../src/handlers/s3-unzipper';
 
 // Simple integration tests without complex mocking
+// Note: Environment variables are set in tests/setup.ts
 describe('Lambda Handler Integration Tests', () => {
-  beforeEach(() => {
-    process.env.BUCKET_NAME = 'test-bucket';
-    process.env.INPUT_PATH = 'input/';
-    process.env.OUTPUT_PATH = 'output/';
-    process.env.LOG_LEVEL = 'ERROR'; // Reduce noise
-  });
-
-  afterEach(() => {
-    // Clean up
-  });
-
   test('should skip non-zip files', async () => {
     // Create test S3 event with non-zip file
     const s3Event: S3Event = {
@@ -45,7 +35,7 @@ describe('Lambda Handler Integration Tests', () => {
               arn: 'arn:aws:s3:::test-bucket',
             },
             object: {
-              key: 'input/2026-01-01_test_file.txt',
+              key: 'test-input/2026-01-01_test_file.txt',
               size: 100,
               eTag: 'test-etag',
               sequencer: 'test-sequencer',
@@ -78,6 +68,7 @@ describe('Lambda Handler Integration Tests', () => {
     // This test validates that config loading works properly
     // Config validation happens at module load time, so we test it exists
     expect(process.env.BUCKET_NAME).toBe('test-bucket');
+    expect(process.env.INPUT_PATH).toBe('test-input/');
   });
 
   test('should handle empty event records', async () => {

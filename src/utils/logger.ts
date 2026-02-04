@@ -1,6 +1,7 @@
 import { Logger } from '@aws-lambda-powertools/logger';
 import type { LoggingContext } from '../types';
 import config from './config';
+import { sanitizeForLogging } from './data-sanitizer';
 
 class CustomLogger {
   private logger: Logger;
@@ -13,41 +14,49 @@ class CustomLogger {
   }
 
   debug(message: string, context?: LoggingContext): void {
+    const sanitizedMessage = sanitizeForLogging.errorMessage(message, context);
     if (context) {
-      this.logger.debug(message, context);
+      const sanitizedContext = sanitizeForLogging.context(context);
+      this.logger.debug(sanitizedMessage, sanitizedContext);
     } else {
-      this.logger.debug(message);
+      this.logger.debug(sanitizedMessage);
     }
   }
 
   info(message: string, context?: LoggingContext): void {
+    const sanitizedMessage = sanitizeForLogging.errorMessage(message, context);
     if (context) {
-      this.logger.info(message, context);
+      const sanitizedContext = sanitizeForLogging.context(context);
+      this.logger.info(sanitizedMessage, sanitizedContext);
     } else {
-      this.logger.info(message);
+      this.logger.info(sanitizedMessage);
     }
   }
 
   warn(message: string, context?: LoggingContext): void {
+    const sanitizedMessage = sanitizeForLogging.errorMessage(message, context);
     if (context) {
-      this.logger.warn(message, context);
+      const sanitizedContext = sanitizeForLogging.context(context);
+      this.logger.warn(sanitizedMessage, sanitizedContext);
     } else {
-      this.logger.warn(message);
+      this.logger.warn(sanitizedMessage);
     }
   }
 
   error(message: string, error?: Error, context?: LoggingContext): void {
+    const sanitizedMessage = sanitizeForLogging.errorMessage(message, context);
     const logContext = {
       ...context,
       ...(error && {
         error: {
           name: error.name,
-          message: error.message,
-          stack: error.stack,
+          message: sanitizeForLogging.errorMessage(error.message, context),
+          stack: sanitizeForLogging.stackTrace(error.stack || ''),
         },
       }),
     };
-    this.logger.error(message, logContext);
+    const sanitizedContext = sanitizeForLogging.context(logContext);
+    this.logger.error(sanitizedMessage, sanitizedContext);
   }
 
   addContext(context: LoggingContext): void {

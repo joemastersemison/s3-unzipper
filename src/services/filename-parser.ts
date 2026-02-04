@@ -1,5 +1,6 @@
 import type { FilenameComponents } from '../types';
 import logger from '../utils/logger';
+import { sanitizeFilename, isValidS3PathComponent } from '../utils/validation';
 
 /**
  * Extracts stem name from complex filenames with date patterns
@@ -38,10 +39,14 @@ export function parseFilename(filename: string): FilenameComponents {
   // Remove any directory path and get just the filename
   const justFilename = filename.split('/').pop() || filename;
 
+  // Pre-sanitize the entire filename to remove dangerous characters
+  const sanitizedFilename = sanitizeFilename(justFilename);
+
   // Separate extension
-  const lastDotIndex = justFilename.lastIndexOf('.');
-  const baseName = lastDotIndex > 0 ? justFilename.substring(0, lastDotIndex) : justFilename;
-  const extension = lastDotIndex > 0 ? justFilename.substring(lastDotIndex) : '';
+  const lastDotIndex = sanitizedFilename.lastIndexOf('.');
+  const baseName =
+    lastDotIndex > 0 ? sanitizedFilename.substring(0, lastDotIndex) : sanitizedFilename;
+  const extension = lastDotIndex > 0 ? sanitizedFilename.substring(lastDotIndex) : '';
 
   // Split by underscores
   const parts = baseName.split('_');
@@ -55,7 +60,13 @@ export function parseFilename(filename: string): FilenameComponents {
     if (datePattern.test(part)) {
       dateParts.push(part);
     } else {
-      nonDateParts.push(part);
+      // Keep empty parts as is for proper parsing, only sanitize non-empty parts
+      if (part === '') {
+        nonDateParts.push(part);
+      } else {
+        const sanitizedPart = sanitizeFilename(part);
+        nonDateParts.push(sanitizedPart);
+      }
     }
   });
 
@@ -63,8 +74,8 @@ export function parseFilename(filename: string): FilenameComponents {
   const stemName = extractStemFromParts(nonDateParts);
 
   return {
-    baseName,
-    extension,
+    baseName: sanitizeFilename(baseName),
+    extension: extension, // Extensions typically don't need sanitization
     dateParts,
     nonDateParts,
     stemName,
@@ -79,8 +90,11 @@ function extractStemFromParts(parts: string[]): string {
     return 'unknown';
   }
 
-  // Filter out empty parts
-  const validParts = parts.filter(part => part && part.trim().length > 0);
+  // Filter out empty parts and sanitize each part
+  const validParts = parts
+    .filter(part => part && part.trim().length > 0)
+    .map(part => sanitizeFilename(part))
+    .filter(part => part && part !== 'unknown' && isValidS3PathComponent(part));
 
   if (validParts.length === 0) {
     return 'unknown';
@@ -111,8 +125,10 @@ function extractStemFromParts(parts: string[]): string {
   // Join with underscores and clean up
   const stemName = stemParts.join('_');
 
-  // Basic cleanup - remove any trailing/leading underscores and normalize
-  return stemName.replace(/^_+|_+$/g, '').replace(/_+/g, '_') || 'unknown';
+  // Final sanitization and cleanup
+  const finalStemName = sanitizeFilename(stemName);
+
+  return finalStemName && isValidS3PathComponent(finalStemName) ? finalStemName : 'unknown';
 }
 
 /**

@@ -2,6 +2,9 @@ import type { Readable } from 'node:stream';
 import * as csv from 'fast-csv';
 import type { CSVProcessingResult, CSVProcessorOptions } from '../types';
 import logger from '../utils/logger';
+import { memoryMonitor } from '../utils/memory-monitor';
+import { retryWithBackoff } from '../utils/retry-handler';
+import { createErrorContext } from '../utils/error-context';
 
 export class CSVProcessor {
   private options: CSVProcessorOptions;
@@ -25,7 +28,7 @@ export class CSVProcessor {
    * Processes a CSV stream by adding a timestamp column
    */
   async processCSVStream(stream: Readable, fileName: string): Promise<Buffer | null> {
-    try {
+    return retryWithBackoff.csvOperation(async () => {
       logger.debug('Starting CSV processing', {
         fileName,
         timestampColumn: this.options.timestampColumn,
@@ -36,6 +39,7 @@ export class CSVProcessor {
       let hasHeaders = false;
       let rowCount = 0;
       const timestamp = this.getCurrentTimestamp();
+      const startTime = new Date();
 
       return new Promise<Buffer | null>((resolve, reject) => {
         const parseStream = csv.parseStream(stream, {
@@ -47,6 +51,20 @@ export class CSVProcessor {
         parseStream.on('data', (row: any[]) => {
           try {
             rowCount++;
+
+            // Check memory every 1000 rows
+            if (rowCount % 1000 === 0) {
+              if (!memoryMonitor.checkMemoryUsage('csv_processing')) {
+                parseStream.destroy(new Error('CSV processing aborted - memory usage too high'));
+                return;
+              }
+            }
+
+            // Limit total rows to prevent memory exhaustion
+            if (rowCount > 100000) {
+              parseStream.destroy(new Error('CSV file too large - exceeds 100,000 row limit'));
+              return;
+            }
 
             // First row - try to detect if it contains headers
             if (rowCount === 1) {
@@ -137,6 +155,16 @@ export class CSVProcessor {
         });
 
         parseStream.on('error', error => {
+          const structuredError = createErrorContext
+            .csv('csv_parse', fileName)
+            .setPhase('stream_parsing')
+            .setTiming(startTime)
+            .createError('CSV parsing failed', error as Error, {
+              errorCode: 'CSV_PARSE_ERROR',
+              retryable: false,
+              severity: 'medium',
+            });
+
           logger.warn('CSV parsing error', {
             fileName,
             error: error.message,
@@ -146,13 +174,11 @@ export class CSVProcessor {
           if (this.options.skipMalformed) {
             resolve(null);
           } else {
-            reject(error);
+            reject(structuredError);
           }
         });
       });
-    } catch (error) {
-      return this.handleMalformedCSV(fileName, error as Error);
-    }
+    }, fileName);
   }
 
   /**

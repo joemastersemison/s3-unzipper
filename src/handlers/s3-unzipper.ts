@@ -1,9 +1,13 @@
 import type { Context, S3Event, S3Handler } from 'aws-lambda';
 import { S3Service } from '../services/s3-service';
 import { ZipProcessor } from '../services/zip-processor';
-import type { ProcessingResult } from '../types';
+import { CSVProcessor } from '../services/csv-processor';
+import type { ProcessingResult, S3EventRecord } from '../types';
 import config from '../utils/config';
 import logger from '../utils/logger';
+import { validateS3Event } from '../utils/validation';
+import { memoryMonitor } from '../utils/memory-monitor';
+import { getS3ClientInfo } from '../utils/s3-client-singleton';
 
 /**
  * AWS Lambda handler for processing S3 ObjectCreated events on zip files
@@ -16,11 +20,24 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
     functionVersion: context.functionVersion,
   });
 
+  // Log initial memory status and S3 client info
+  const initialMemory = memoryMonitor.getMemoryUsage();
+  const s3ClientInfo = getS3ClientInfo();
+
   logger.info('S3 Unzipper Lambda started', {
     eventRecords: event.Records.length,
     requestId: context.awsRequestId,
     remainingTimeMs: context.getRemainingTimeInMillis(),
+    initialMemoryUsagePercentage: Math.round(initialMemory.usagePercentage * 100) / 100,
+    initialHeapUsedMB: Math.round(initialMemory.heapUsed / 1024 / 1024),
+    s3ClientReused: s3ClientInfo.isInitialized,
+    s3ClientAgeDaysMs: s3ClientInfo.ageMs,
   });
+
+  // Check initial memory state
+  if (!memoryMonitor.checkMemoryUsage('lambda_start')) {
+    throw new Error('Lambda cannot start - memory usage already too high');
+  }
 
   const results: ProcessingResult[] = [];
   let overallSuccess = true;
@@ -31,9 +48,14 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
       throw new Error('BUCKET_NAME environment variable is not set');
     }
 
-    // Initialize services
+    // Initialize services with dependency injection
     const s3Service = new S3Service();
-    const zipProcessor = new ZipProcessor(s3Service);
+    const csvProcessor = new CSVProcessor({
+      timestampColumn: config.csvTimestampColumn,
+      dateFormat: 'ISO',
+      skipMalformed: config.csvSkipMalformed,
+    });
+    const zipProcessor = new ZipProcessor(s3Service, csvProcessor);
 
     // Process each S3 event record
     for (let i = 0; i < event.Records.length; i++) {
@@ -75,9 +97,10 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
       }
     }
 
-    // Log overall results
+    // Log overall results with memory information
     const totalFilesProcessed = results.reduce((sum, result) => sum + result.filesProcessed, 0);
     const totalErrors = results.reduce((sum, result) => sum + (result.errors?.length || 0), 0);
+    const finalMemory = memoryMonitor.getMemoryUsage();
 
     logger.info('S3 Unzipper Lambda completed', {
       overallSuccess,
@@ -87,7 +110,15 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
       totalErrors,
       requestId: context.awsRequestId,
       remainingTimeMs: context.getRemainingTimeInMillis(),
+      finalMemoryUsagePercentage: Math.round(finalMemory.usagePercentage * 100) / 100,
+      finalHeapUsedMB: Math.round(finalMemory.heapUsed / 1024 / 1024),
+      memoryDeltaPercentage:
+        Math.round((finalMemory.usagePercentage - initialMemory.usagePercentage) * 100) / 100,
+      circuitBreakerTripped: memoryMonitor.isCircuitBreakerTripped(),
     });
+
+    // Force final garbage collection if available
+    memoryMonitor.forceGarbageCollection('lambda_completion');
 
     // If there were any failures, throw an error to mark the Lambda as failed
     if (!overallSuccess) {
@@ -118,46 +149,35 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
  * Processes a single S3 event record
  */
 async function processS3Record(
-  record: any,
+  record: S3EventRecord,
   zipProcessor: ZipProcessor,
   context: Context
 ): Promise<ProcessingResult> {
-  // Extract S3 information from the record
-  const bucket = record.s3?.bucket?.name;
-  const encodedKey = record.s3?.object?.key;
-
-  if (!bucket || !encodedKey) {
-    throw new Error('Invalid S3 event record: missing bucket or key');
+  // Validate the S3 event record comprehensively
+  const validation = validateS3Event(record);
+  if (!validation.isValid) {
+    throw new Error(`Invalid S3 event record: ${validation.error}`);
   }
 
-  // Decode the S3 key (handles URL encoding and + characters)
+  // Safe to access after validation
+  const bucket = record.s3.bucket.name;
+  const encodedKey = record.s3.object.key;
+
+  // Decode the S3 key (validation already handles this, but we need the decoded value)
   const key = decodeURIComponent(encodedKey.replace(/\+/g, ' '));
 
   logger.info('Processing S3 record', {
     eventName: record.eventName,
+    eventSource: record.eventSource,
     bucket,
     key,
-    objectSize: record.s3?.object?.size,
+    objectSize: record.s3.object.size,
     requestId: context.awsRequestId,
   });
 
   // Validate that this is a zip file
   if (!key.toLowerCase().endsWith('.zip')) {
     logger.warn('Skipping non-zip file', { bucket, key });
-    return {
-      success: true,
-      filesProcessed: 0,
-      errors: [],
-    };
-  }
-
-  // Validate that the file is in the expected input path
-  if (!key.startsWith(config.inputPath)) {
-    logger.warn('Skipping file not in input path', {
-      bucket,
-      key,
-      expectedInputPath: config.inputPath,
-    });
     return {
       success: true,
       filesProcessed: 0,
